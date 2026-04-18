@@ -1,0 +1,20 @@
+[Unit]
+Description=Mount Samba Share (Santa Maria)
+After=network-online.target
+Wants=network-online.target
+Documentation=man:mount(8) man:mount.cifs(8)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/samba-mount.sh mount
+ExecStop=/usr/local/bin/samba-mount.sh unmount
+RemainAfterExit=yes
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=samba-mount
+
+# Restart se a montagem falhar
+OnFailure=samba-mount-retry.service
+
+[Install]
+WantedBy=multi-user.target
