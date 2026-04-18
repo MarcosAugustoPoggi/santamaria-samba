@@ -1,0 +1,11 @@
+[Unit]
+Description=Samba - Santa Maria Network Disk (automount)
+After=network-online.target
+Wants=network-online.target
+
+[Automount]
+Where=/media/SantaMaria
+TimeoutIdleSec=0
+
+[Install]
+WantedBy=remote-fs.target

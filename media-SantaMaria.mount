@@ -1,0 +1,15 @@
+[Unit]
+Description=Samba - Santa Maria Network Disk
+After=network-online.target
+Wants=network-online.target
+Before=remote-fs.target
+ConditionPathExists=/media/SantaMaria
+
+[Mount]
+What=//192.168.15.212/santamaria
+Where=/media/SantaMaria
+Type=cifs
+Options=credentials=/etc/samba/credentials-santamaria,uid=1000,gid=1000,file_mode=0755,dir_mode=0755,noperm,_netdev,x-gvfs-show,x-gvfs-name=SantaMaria,soft,retrans=1
+
+[Install]
+WantedBy=remote-fs.target

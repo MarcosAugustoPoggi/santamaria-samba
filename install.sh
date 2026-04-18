@@ -2,102 +2,126 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT_NAME="samba-mount.sh"
-INSTALL_PATH="/usr/local/bin/$SCRIPT_NAME"
-SERVICE_DIR="/etc/systemd/system"
+SAMBA_SERVER="192.168.15.212"
+SAMBA_SHARE="santamaria"
+SAMBA_USER="santamaria"
+SAMBA_PASS="santamaria"
+MOUNT_POINT="/media/SantaMaria"
+CREDS_FILE="/etc/samba/credentials-santamaria"
 
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║       Instalação: Montagem Samba (Santa Maria)            ║"
+echo "║   Instalação: Samba como Disco de Rede (SantaMaria)       ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo
 
 # Verificar privilégios root
 if [[ $EUID -ne 0 ]]; then
-    echo "❌ Este script deve ser executado como root (use: sudo ./install.sh)"
+    echo "❌ Este script deve ser executado como root"
     exit 1
 fi
 
-# Verificar dependências
+# Verificar se cifs-utils está instalado
 echo "📦 Verificando dependências..."
 if ! command -v mount.cifs &> /dev/null; then
-    echo ""
     echo "❌ ERRO: cifs-utils não está instalado"
     echo ""
-    echo "📦 Instale com um dos comandos abaixo:"
-    echo ""
-    echo "   Debian/Ubuntu/Mint:"
-    echo "   $ sudo apt-get update && sudo apt-get install cifs-utils"
-    echo ""
-    echo "   RHEL/CentOS/Rocky:"
-    echo "   $ sudo yum install cifs-utils"
-    echo ""
-    echo "   Fedora:"
-    echo "   $ sudo dnf install cifs-utils"
-    echo ""
-    echo "Depois execute este script novamente:"
-    echo "   $ sudo bash install.sh"
-    echo ""
+    echo "📦 Instale com:"
+    echo "   sudo apt-get update && sudo apt-get install cifs-utils"
     exit 1
 fi
 echo "   ✓ mount.cifs encontrado"
 
-# Copiar script
+# Desmontar montagem anterior se existir
 echo
-echo "📝 Instalando script..."
-cp "$SCRIPT_DIR/$SCRIPT_NAME" "$INSTALL_PATH"
-chmod 755 "$INSTALL_PATH"
-echo "   ✓ Script instalado em $INSTALL_PATH"
+echo "🔌 Limpando montagens antigas..."
+if mountpoint -q /mnt/santamaria 2>/dev/null; then
+    echo "   Desmontando /mnt/santamaria..."
+    umount -l /mnt/santamaria || true
+fi
 
-# Copiar systemd units
+# Parar serviços antigos
+systemctl stop samba-mount.service 2>/dev/null || true
+systemctl stop samba-mount-retry.service 2>/dev/null || true
+systemctl disable samba-mount.service 2>/dev/null || true
+systemctl disable samba-mount-retry.service 2>/dev/null || true
+
+# Remover units antigas
+rm -f /etc/systemd/system/samba-mount.service
+rm -f /etc/systemd/system/samba-mount-retry.service
+
+# Criar diretório de credenciais
 echo
-echo "🔧 Instalando serviços systemd..."
-cp "$SCRIPT_DIR/samba-mount.service" "$SERVICE_DIR/"
-cp "$SCRIPT_DIR/samba-mount-retry.service" "$SERVICE_DIR/"
+echo "🔐 Criando credenciais..."
+mkdir -p "$(dirname "$CREDS_FILE")"
+
+cat > "$CREDS_FILE" << EOF
+username=$SAMBA_USER
+password=$SAMBA_PASS
+EOF
+
+chmod 600 "$CREDS_FILE"
+echo "   ✓ Credenciais em: $CREDS_FILE (chmod 600)"
+
+# Criar ponto de montagem
+echo
+echo "📁 Criando ponto de montagem..."
+mkdir -p "$MOUNT_POINT"
+chmod 755 "$MOUNT_POINT"
+echo "   ✓ $MOUNT_POINT criado"
+
+# Instalar systemd units
+echo
+echo "🔧 Instalando units systemd..."
+cp "$SCRIPT_DIR/media-SantaMaria.mount" /etc/systemd/system/
+cp "$SCRIPT_DIR/media-SantaMaria.automount" /etc/systemd/system/
+chmod 644 /etc/systemd/system/media-SantaMaria.*
+echo "   ✓ Units instaladas"
+
+# Recarregar systemd
+echo
+echo "🔄 Recarregando systemd..."
 systemctl daemon-reload
-echo "   ✓ Serviços instalados"
+echo "   ✓ systemd recarregado"
 
-# Criar diretório de montagem
-mkdir -p /mnt/santamaria
-chmod 755 /mnt/santamaria
+# Habilitar units
 echo
-echo "📁 Diretório de montagem criado em /mnt/santamaria"
-
-# Habilitar e iniciar
-echo
-echo "▶️  Habilitando serviço para inicializar no boot..."
-systemctl enable samba-mount.service
-systemctl enable samba-mount-retry.service
-echo "   ✓ Serviço habilitado"
+echo "▶️  Habilitando units para boot automático..."
+systemctl enable media-SantaMaria.automount
+systemctl enable media-SantaMaria.mount
+echo "   ✓ Units habilitadas"
 
 # Iniciar montagem
 echo
 echo "🔗 Iniciando montagem..."
-if systemctl start samba-mount.service; then
-    echo "   ✓ Montagem iniciada com sucesso"
+if systemctl start media-SantaMaria.mount; then
+    echo "   ✓ Montagem iniciada"
 else
-    echo "   ⚠ Falha ao iniciar montagem (verifique com: journalctl -u samba-mount -n 20)"
+    echo "   ⚠ Falha ao montar (rede pode não estar pronta)"
 fi
 
-# Status
+# Verificação
 echo
-echo "📊 Status:"
-systemctl status samba-mount.service --no-pager || true
+echo "📊 Verificação:"
+if mountpoint -q "$MOUNT_POINT"; then
+    echo "   ✓ Disco montado em: $MOUNT_POINT"
+    echo ""
+    df -h "$MOUNT_POINT" | tail -1 | awk '{print "   Tamanho:", $2, "Usado:", $3, "Disponível:", $4}'
+else
+    echo "   ⚠ Disco não está montado"
+    echo "   Verifique com: journalctl -u media-SantaMaria.mount -n 20"
+fi
 
-# Instruções para usuários
 echo
 echo "════════════════════════════════════════════════════════════"
 echo "✅ Instalação concluída!"
 echo
-echo "📌 Próximos passos para cada usuário:"
-echo "   1. Execute como usuário normal:"
-echo "      bash $SCRIPT_DIR/user-setup.sh"
-echo
-echo "   2. Acesse o compartilhamento:"
-echo "      cd ~/santamaria"
-echo "      ls -la"
+echo "📌 Próximos passos:"
+echo "   1. Abra o gerenciador de arquivos (Files/Nemo)"
+echo "   2. Procure por 'SantaMaria' em 'Outros locais' ou 'Rede'"
+echo "   3. O disco deve aparecer como volume de rede"
 echo
 echo "📋 Comandos úteis:"
-echo "   systemctl status samba-mount           # Ver status"
-echo "   journalctl -u samba-mount -n 20       # Ver logs"
-echo "   /usr/local/bin/samba-mount.sh status  # Verificar montagem"
+echo "   systemctl status media-SantaMaria.mount"
+echo "   journalctl -u media-SantaMaria.mount -f"
+echo "   df -h /media/SantaMaria"
 echo "════════════════════════════════════════════════════════════"

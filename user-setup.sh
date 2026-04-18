@@ -1,34 +1,24 @@
 #!/bin/bash
 set -euo pipefail
 
-MOUNT_POINT="/mnt/santamaria"
-USER_LINK="$HOME/santamaria"
+MOUNT_POINT="/media/SantaMaria"
 
-echo "Setup Santa Maria Samba para: $(whoami)"
+echo "Verificando Santa Maria Samba..."
 echo
 
-# Verificar se montagem existe
 if [[ ! -d "$MOUNT_POINT" ]]; then
     echo "❌ Erro: $MOUNT_POINT não existe"
     echo "   Execute como root primeiro: sudo bash ~/Code/utils/santamaria/install.sh"
     exit 1
 fi
 
-# Criar symlink
-if [[ -L "$USER_LINK" ]]; then
-    echo "✓ Symlink já existe: $USER_LINK"
-elif [[ -d "$USER_LINK" ]]; then
-    echo "⚠ Diretório $USER_LINK já existe. Substituindo..."
-    rm -rf "$USER_LINK"
-    ln -s "$MOUNT_POINT" "$USER_LINK"
-    echo "✓ Symlink criado"
-else
-    echo "Criando symlink: $USER_LINK → $MOUNT_POINT"
-    ln -s "$MOUNT_POINT" "$USER_LINK"
-    echo "✓ Symlink criado"
+if ! mountpoint -q "$MOUNT_POINT"; then
+    echo "⚠ Aviso: Disco não está montado no momento"
+    echo "   Será montado automaticamente quando acessar"
 fi
 
-echo
 echo "✅ Pronto! Acesse em:"
-echo "   cd ~/santamaria"
-echo "   ls -la ~/santamaria"
+echo "   cd /media/SantaMaria"
+echo "   ls -la /media/SantaMaria"
+echo
+echo "O disco deve aparecer como volume de rede no gerenciador de arquivos."

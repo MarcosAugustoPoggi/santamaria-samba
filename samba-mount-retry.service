@@ -1,9 +1,0 @@
-[Unit]
-Description=Retry Samba Mount (Santa Maria)
-After=samba-mount.service
-
-[Service]
-Type=oneshot
-ExecStart=/bin/bash -c 'sleep 10 && systemctl start samba-mount'
-StandardOutput=journal
-StandardError=journal
