@@ -1,6 +1,6 @@
 # Montagem Automatizada de Samba (Santa Maria)
 
-Script robusto para montar compartilhamento Samba que funciona em boot, relação de energia e múltiplos Linux.
+Script simples para montar compartilhamento Samba como disco de rede. Funciona em **qualquer Linux** (Ubuntu, Debian, Mint, CentOS, etc), em boot automático e após relação de energia.
 
 ## ✨ Características
 
@@ -21,6 +21,26 @@ Script robusto para montar compartilhamento Samba que funciona em boot, relaçã
 | `install.sh` | Instalador (roda uma vez como root) |
 | `user-setup.sh` | Setup por usuário (cria symlink em `~/santamaria`) |
 
+## 📋 Pré-requisitos
+
+**Obrigatório:** instalar `cifs-utils` — driver CIFS para Linux montar compartilhamentos Samba
+
+```bash
+# Debian/Ubuntu
+sudo apt-get update
+sudo apt-get install cifs-utils
+
+# RHEL/CentOS
+sudo yum install cifs-utils
+
+# Fedora
+sudo dnf install cifs-utils
+```
+
+**Quer saber mais sobre cifs-utils?** Veja `PREREQUISITES.md`
+
+Depois de instalar, continue com a instalação abaixo.
+
 ## 🚀 Instalação Rápida
 
 ### 1️⃣ Em cada máquina (como root)
@@ -31,7 +51,7 @@ sudo bash install.sh
 ```
 
 O script vai:
-- Verificar `cifs-utils` instalado
+- Verificar `cifs-utils` instalado ✅
 - Copiar script para `/usr/local/bin/samba-mount.sh`
 - Instalar serviços systemd
 - Criar `/mnt/santamaria`
@@ -46,11 +66,16 @@ bash ~/Code/utils/santamaria/user-setup.sh
 
 Isso cria um symlink: `~/santamaria` → `/mnt/santamaria`
 
-Pronto! Acesso em:
+### 3️⃣ Acessar pelo terminal
+
 ```bash
 cd ~/santamaria
 ls -la
+cp ~/santamaria/arquivo.txt ~
+vim ~/santamaria/documento.md
 ```
+
+Pronto! Funciona como qualquer pasta normal.
 
 ## 🔄 Como funciona no boot + relação de energia
 
@@ -121,21 +146,27 @@ password=santamaria
 
 Arquivo é protegido: `chmod 600` (apenas root pode ler)
 
-## 📤 Distribuir para outras máquinas
+## 📤 Usar em outra máquina (ex: Mint)
 
-Se tiver acesso SSH:
+Script funciona **igual em qualquer Linux**. Basta copiar e rodar:
 
 ```bash
 # Na máquina com os scripts
-scp -r ~/Code/utils/santamaria user@outro-linux:~/Code/utils/santamaria
+~/Code/utils/santamaria/sync-to-host.sh user@mint-machine
 
-# Na outra máquina
+# Ou manualmente:
+scp -r ~/Code/utils/santamaria user@mint-machine:~/Code/utils/santamaria
+```
+
+Na outra máquina (Mint ou qualquer Linux):
+```bash
 cd ~/Code/utils/santamaria
+sudo apt-get install cifs-utils  # Se não tiver
 sudo bash install.sh
 bash user-setup.sh
 ```
 
-Ou copie manualmente a pasta `santamaria` entre as máquinas.
+Pronto! Funciona igual lá também. Sem diferenças.
 
 ## 🐛 Troubleshooting
 

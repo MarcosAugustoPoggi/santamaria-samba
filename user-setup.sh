@@ -1,28 +1,34 @@
 #!/bin/bash
 set -euo pipefail
 
-# Script que cada usuário executa uma vez para criar symlink
 MOUNT_POINT="/mnt/santamaria"
 USER_LINK="$HOME/santamaria"
 
+echo "Setup Santa Maria Samba para: $(whoami)"
+echo
+
+# Verificar se montagem existe
 if [[ ! -d "$MOUNT_POINT" ]]; then
-    echo "❌ Erro: $MOUNT_POINT não existe. Execute install.sh como root primeiro."
+    echo "❌ Erro: $MOUNT_POINT não existe"
+    echo "   Execute como root primeiro: sudo bash ~/Code/utils/santamaria/install.sh"
     exit 1
 fi
 
+# Criar symlink
 if [[ -L "$USER_LINK" ]]; then
-    echo "✓ Link já existe em $USER_LINK"
-    exit 0
-fi
-
-if [[ -d "$USER_LINK" ]]; then
-    echo "⚠ Diretório $USER_LINK já existe. Removendo..."
+    echo "✓ Symlink já existe: $USER_LINK"
+elif [[ -d "$USER_LINK" ]]; then
+    echo "⚠ Diretório $USER_LINK já existe. Substituindo..."
     rm -rf "$USER_LINK"
+    ln -s "$MOUNT_POINT" "$USER_LINK"
+    echo "✓ Symlink criado"
+else
+    echo "Criando symlink: $USER_LINK → $MOUNT_POINT"
+    ln -s "$MOUNT_POINT" "$USER_LINK"
+    echo "✓ Symlink criado"
 fi
 
-echo "Criando symlink $USER_LINK -> $MOUNT_POINT"
-ln -s "$MOUNT_POINT" "$USER_LINK"
-chmod 755 "$USER_LINK"
-
-echo "✓ Setup concluído. Acesse em: $USER_LINK"
-ls -la "$USER_LINK"
+echo
+echo "✅ Pronto! Acesse em:"
+echo "   cd ~/santamaria"
+echo "   ls -la ~/santamaria"

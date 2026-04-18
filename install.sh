@@ -20,9 +20,23 @@ fi
 # Verificar dependências
 echo "📦 Verificando dependências..."
 if ! command -v mount.cifs &> /dev/null; then
-    echo "❌ cifs-utils não instalado"
-    echo "   Debian/Ubuntu: sudo apt-get install cifs-utils"
-    echo "   RHEL/CentOS:   sudo yum install cifs-utils"
+    echo ""
+    echo "❌ ERRO: cifs-utils não está instalado"
+    echo ""
+    echo "📦 Instale com um dos comandos abaixo:"
+    echo ""
+    echo "   Debian/Ubuntu/Mint:"
+    echo "   $ sudo apt-get update && sudo apt-get install cifs-utils"
+    echo ""
+    echo "   RHEL/CentOS/Rocky:"
+    echo "   $ sudo yum install cifs-utils"
+    echo ""
+    echo "   Fedora:"
+    echo "   $ sudo dnf install cifs-utils"
+    echo ""
+    echo "Depois execute este script novamente:"
+    echo "   $ sudo bash install.sh"
+    echo ""
     exit 1
 fi
 echo "   ✓ mount.cifs encontrado"

@@ -62,7 +62,7 @@ mount_share() {
     log "Montando //$SAMBA_SERVER/$SAMBA_SHARE em $MOUNT_POINT..."
     if mount -t cifs \
         "//$SAMBA_SERVER/$SAMBA_SHARE" "$MOUNT_POINT" \
-        -o "credentials=$CREDS_FILE,uid=$(id -u nobody),gid=$(id -g nogroup),file_mode=0755,dir_mode=0755,noperm"; then
+        -o "credentials=$CREDS_FILE,uid=0,gid=0,file_mode=0777,dir_mode=0777,noperm"; then
         log "Montagem bem-sucedida"
         return 0
     else
