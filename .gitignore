@@ -1,0 +1,10 @@
+# Credenciais Samba
+/etc/samba/credentials-*
+*.credentials
+.credentials
+
+# Arquivos temporários
+*.swp
+*.swo
+*~
+.DS_Store

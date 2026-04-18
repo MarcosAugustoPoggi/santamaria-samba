@@ -4,8 +4,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SAMBA_SERVER="192.168.15.212"
 SAMBA_SHARE="santamaria"
-SAMBA_USER="santamaria"
-SAMBA_PASS="santamaria"
 MOUNT_POINT="/media/SantaMaria"
 CREDS_FILE="/etc/samba/credentials-santamaria"
 
@@ -19,6 +17,13 @@ if [[ $EUID -ne 0 ]]; then
     echo "❌ Este script deve ser executado como root"
     exit 1
 fi
+
+# Pedir credenciais interativamente
+echo "🔐 Credenciais Samba:"
+read -p "   Usuário: " SAMBA_USER
+read -sp "   Senha: " SAMBA_PASS
+echo
+echo
 
 # Verificar se cifs-utils está instalado
 echo "📦 Verificando dependências..."
@@ -48,10 +53,11 @@ systemctl disable samba-mount-retry.service 2>/dev/null || true
 # Remover units antigas
 rm -f /etc/systemd/system/samba-mount.service
 rm -f /etc/systemd/system/samba-mount-retry.service
+rm -f /etc/systemd/system/media-santamaria.*
 
 # Criar diretório de credenciais
 echo
-echo "🔐 Criando credenciais..."
+echo "🔐 Salvando credenciais..."
 mkdir -p "$(dirname "$CREDS_FILE")"
 
 cat > "$CREDS_FILE" << EOF
